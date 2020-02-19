@@ -1,0 +1,40 @@
+{
+  "project_info": {
+    "project_number": "414153307161",
+    "firebase_url": "https://ata-et-92453.firebaseio.com",
+    "project_id": "ata-et-92453",
+    "storage_bucket": "ata-et-92453.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:414153307161:android:f48ad63c25a96bce4c6688",
+        "android_client_info": {
+          "package_name": "com.example.ata"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "414153307161-mk68coj92682np0ov33hdvllcff3so6k.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDc87mZQnmfSekiCdPwaCBAQx4g_tthHIo"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "414153307161-mk68coj92682np0ov33hdvllcff3so6k.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
