@@ -5,7 +5,7 @@ import 'package:ata/models/http_exception.dart';
 enum FetchType { POST, GET, PUT, PATCH, DELETE }
 
 class Util {
-  static Future<String> fetch(FetchType type, String url, Map<String, dynamic> requestPayload) async {
+  static Future<String> fetch(FetchType type, String url, [Map<String, dynamic> requestPayload = const {}]) async {
     try {
       http.Response response;
       switch (type) {

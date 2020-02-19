@@ -7,11 +7,10 @@ import 'package:shared_preferences/shared_preferences.dart';
 enum AuthType { SignUp, SignIn }
 
 class Auth with ChangeNotifier {
-  final _apiKey = 'AIzaSyDauVEL3nQHSaX7_i93z-a8q2vlgLAi7F0';
-  String _token;
+  final _apiKey = 'AIzaSyCfrk-pANuYEeE3Npr87FEyyk8TwH6jJ5s';
+  String _idToken; // Firebase ID token of the account.
+  String _localId; // The uid of the current user.
   DateTime _expiryDate;
-  String _userId;
-  // Timer _authTimer;
 
   String _getUrl(AuthType authType) {
     String firebaseAuthType;
@@ -24,6 +23,10 @@ class Auth with ChangeNotifier {
         break;
     }
     return 'https://identitytoolkit.googleapis.com/v1/accounts:$firebaseAuthType?key=$_apiKey';
+  }
+
+  bool get isAuth {
+    return _idToken != null;
   }
 
   Future<String> authenticate(String email, String password, AuthType authType) async {
@@ -39,8 +42,8 @@ class Auth with ChangeNotifier {
       if (responseData['error'] != null) return responseData['error']['message'];
 
       // Setting login data
-      _token = responseData['idToken'];
-      _userId = responseData['localId'];
+      _idToken = responseData['idToken'];
+      _localId = responseData['localId'];
       _expiryDate = DateTime.now().add(
         Duration(
           seconds: int.parse(responseData['expiresIn']),
@@ -50,8 +53,8 @@ class Auth with ChangeNotifier {
       // Saving to shared prefs
       final prefs = await SharedPreferences.getInstance();
       final loginDataJson = json.encode({
-        'token': _token,
-        'userId': _userId,
+        'token': _idToken,
+        'localId': _localId,
         'expiryDate': _expiryDate.toIso8601String(),
       });
       prefs.setString('loginData', loginDataJson);
@@ -64,14 +67,10 @@ class Auth with ChangeNotifier {
     }
   }
 
-  bool get isAuth {
-    return _token != null;
-  }
-
   Future<void> signOut() async {
-    _token = null;
+    _idToken = null;
     _expiryDate = null;
-    _userId = null;
+    _localId = null;
 
     final prefs = await SharedPreferences.getInstance();
     prefs.clear();
@@ -81,16 +80,39 @@ class Auth with ChangeNotifier {
 
   Future<bool> autoSignIn() async {
     final prefs = await SharedPreferences.getInstance();
-    await Future.delayed(const Duration(seconds: 2), null);
+    await Future.delayed(const Duration(milliseconds: 1), null);
     if (!prefs.containsKey('loginData')) return false;
 
     final loginData = json.decode(prefs.getString('loginData')) as Map<String, Object>;
     final expiryDate = DateTime.parse(loginData['expiryDate']);
 
     if (expiryDate.isBefore(DateTime.now())) return false;
-    _token = loginData['token'];
-    _userId = loginData['userId'];
+    _idToken = loginData['token'];
+    _localId = loginData['localId'];
     _expiryDate = expiryDate;
     return true;
+  }
+
+  // Admin features
+
+  Future<void> updateOfficeSettings(String ipAddress, String longs, String lats) async {
+    final officeUrl = 'https://atapp-7720c.firebaseio.com/office.json?auth=$_idToken';
+
+    var reponseText = await Util.fetch(FetchType.PUT, officeUrl, {
+      'ip': ipAddress,
+      'location': {
+        'longs': longs,
+        'lats': lats,
+      },
+    });
+
+    print(reponseText);
+  }
+
+  Future<dynamic> fetchOfficeSettings() async {
+    final officeUrl = 'https://atapp-7720c.firebaseio.com/office.json?auth=$_idToken';
+    var reponseText = await Util.fetch(FetchType.GET, officeUrl);
+
+    return json.decode(reponseText);
   }
 }
