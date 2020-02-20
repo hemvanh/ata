@@ -1,7 +1,8 @@
 import 'dart:async';
 import 'dart:convert';
+import 'package:ata/providers/auth.dart';
+import 'package:ata/util.dart';
 import 'package:flutter/material.dart';
-import '../util.dart';
 
 class User with ChangeNotifier {
   String _idToken; // Firebase ID token of the account.
@@ -9,38 +10,27 @@ class User with ChangeNotifier {
   String email;
   String displayName;
   String photoUrl;
-
-  Future<Map<String, dynamic>> getDeviceIP() async {
-    try {
-      var responseDeviceIP = await Util.fetch(FetchType.GET, 'http://ip-api.com/json');
-      final responseData = json.decode(responseDeviceIP) as Map<String, dynamic>;
-      return responseData;
-    } catch (error) {
-      return {'error': error};
-    }
+  final Auth _auth;
+  User({@required Auth auth}) : _auth = auth;
+  Future<String> getDeviceIP() async {
+    var responseText = await Util.fetch(FetchType.GET, 'http://ip-api.com/json');
+    final responseData = json.decode(responseText);
+    return responseData['query'];
   }
 
-  Future<Map<String, dynamic>> getOfficeIP() async {
-    try {
-      var responseOfficeIP = await Util.fetch(FetchType.GET, 'https://ata-et-92453.firebaseio.com/office.json?auth=$_idToken');
-      final responseData = json.decode(responseOfficeIP) as Map<String, dynamic>;
-      return responseData;
-    } catch (error) {
-      return {'error': error};
-    }
+  Future<String> getOfficeIP() async {
+    var responseData = await _auth.fetchOfficeSettings();
+    return responseData['ip'];
   }
+
 
   Future<bool> checkIP() async {
-    try {
-      var deviceIP = await getDeviceIP();
-      var officeIP = await getOfficeIP();
-      if (deviceIP.values.last == officeIP.values.first) {
-        return true;
-      } else {
-        return false;
-      }
-    } catch (error) {
-      return error;
+    var deviceIP = await getDeviceIP();
+    var officeIP = await getOfficeIP();
+    if (deviceIP == officeIP) {
+      return true;
+    } else {
+      return false;
     }
   }
 }
