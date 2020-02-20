@@ -2,6 +2,7 @@ import 'dart:convert';
 
 import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
+import 'package:location/location.dart';
 
 import '../util.dart';
 
@@ -14,13 +15,13 @@ class User with ChangeNotifier {
 
   Future<bool> checkLocation() async {
     try {
-      var responseData = await getDeviceLocation();
+      var deviceLocation = await fetchDeviceLocation();
+      var locationSetting = await fetchOfficeLocationSetting();
 
-      var jsonStr = await fetchOfficeLocationSetting();
-      final double startLatitude = responseData['lon'];
-      final double startLongitude = responseData['lat'];
-      final double endLatitude = double.parse(jsonStr['location']['longs']);
-      final double endLongitude = double.parse(jsonStr['location']['lats']);
+      final double startLatitude = deviceLocation.longitude;
+      final double startLongitude = deviceLocation.latitude;
+      final double endLatitude = double.parse(locationSetting['location']['longs']);
+      final double endLongitude = double.parse(locationSetting['location']['lats']);
       final double distance = await Geolocator().distanceBetween(startLatitude, startLongitude, endLatitude, endLongitude);
       if (distance / 1000 < 50.0) {
         return true;
@@ -30,20 +31,19 @@ class User with ChangeNotifier {
     }
   }
 
-  Future<Map<String, dynamic>> getDeviceLocation() async {
+  Future<LocationData> fetchDeviceLocation() async {
     try {
-      var responseText = await Util.fetch(FetchType.GET, 'http://ip-api.com/json');
-      final responseData = json.decode(responseText) as Map<String, dynamic>;
-      return responseData;
+      var location = new Location();
+      var diviceLocation = await location.getLocation();
+      return diviceLocation;
     } catch (error) {
-      return {'error': error};
+      return error;
     }
   }
 
   Future<dynamic> fetchOfficeLocationSetting() async {
     final officeUrl = 'https://atapp-7720c.firebaseio.com/office.json?auth=$_idToken';
     var reponseText = await Util.fetch(FetchType.GET, officeUrl);
-
     return json.decode(reponseText);
   }
 }
