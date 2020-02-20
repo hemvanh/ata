@@ -1,10 +1,7 @@
-import 'dart:convert';
-
+import 'package:ata/providers/auth.dart';
 import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:location/location.dart';
-
-import '../util.dart';
 
 class User with ChangeNotifier {
   String _idToken; // Firebase ID token of the account.
@@ -12,23 +9,20 @@ class User with ChangeNotifier {
   String email;
   String displayName;
   String photoUrl;
-
+  final Auth _auth;
+  User({@required Auth auth}) : _auth = auth;
   Future<bool> checkLocation() async {
-    try {
-      var deviceLocation = await fetchDeviceLocation();
-      var locationSetting = await fetchOfficeLocationSetting();
-
-      final double startLatitude = deviceLocation.longitude;
-      final double startLongitude = deviceLocation.latitude;
-      final double endLatitude = double.parse(locationSetting['location']['longs']);
-      final double endLongitude = double.parse(locationSetting['location']['lats']);
-      final double distance = await Geolocator().distanceBetween(startLatitude, startLongitude, endLatitude, endLongitude);
-      if (distance / 1000 < 50.0) {
-        return true;
-      }
-    } catch (error) {
-      return false;
+    var deviceLocation = await fetchDeviceLocation();
+    var locationSetting = await _auth.fetchOfficeSettings();
+    final double startLatitude = deviceLocation.longitude;
+    final double startLongitude = deviceLocation.latitude;
+    final double endLatitude = double.parse(locationSetting['longs']);
+    final double endLongitude = double.parse(locationSetting['lats']);
+    final double distance = await Geolocator().distanceBetween(startLatitude, startLongitude, endLatitude, endLongitude);
+    if (distance / 1000 < 50.0) {
+      return true;
     }
+    return false;
   }
 
   Future<LocationData> fetchDeviceLocation() async {
@@ -39,11 +33,5 @@ class User with ChangeNotifier {
     } catch (error) {
       return error;
     }
-  }
-
-  Future<dynamic> fetchOfficeLocationSetting() async {
-    final officeUrl = 'https://atapp-7720c.firebaseio.com/office.json?auth=$_idToken';
-    var reponseText = await Util.fetch(FetchType.GET, officeUrl);
-    return json.decode(reponseText);
   }
 }
