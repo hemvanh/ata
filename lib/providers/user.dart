@@ -41,7 +41,7 @@ class User with ChangeNotifier {
   }
 
   Future<dynamic> fetchOfficeLocationSetting() async {
-    final officeUrl = 'https://attendance-record-522c8.firebaseio.com/office.json?auth=$_idToken';
+    final officeUrl = 'https://atapp-7720c.firebaseio.com/office.json?auth=$_idToken';
     var reponseText = await Util.fetch(FetchType.GET, officeUrl);
 
     return json.decode(reponseText);
