@@ -1,7 +1,6 @@
 import 'package:ata/providers/auth.dart';
 import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
-import 'package:location/location.dart';
 
 class User with ChangeNotifier {
   String _idToken; // Firebase ID token of the account.
@@ -25,11 +24,10 @@ class User with ChangeNotifier {
     return false;
   }
 
-  Future<LocationData> fetchDeviceLocation() async {
+  Future<Position> fetchDeviceLocation() async {
     try {
-      var location = new Location();
-      var diviceLocation = await location.getLocation();
-      return diviceLocation;
+      var deviceLocation = await Geolocator().getCurrentPosition();
+      return deviceLocation;
     } catch (error) {
       return error;
     }
