@@ -5,6 +5,7 @@ import 'package:intl/intl.dart';
 import '../util.dart';
 
 enum AttendanceType { In, Out }
+enum AttendanceStatus { CheckedIn, CheckedOut, NotCheckIn, NotCheckOut }
 
 class User with ChangeNotifier {
   String _urlReports = "https://attendance-dcecd.firebaseio.com/reports/";
@@ -14,52 +15,54 @@ class User with ChangeNotifier {
   String displayName;
   String photoUrl;
 
-  Future<dynamic> checkAttendance() async {
-    DateFormat formattedDate = DateFormat('yyyy-MM-dd');
-    String currentDate = formattedDate.format(DateTime.now());
-    String urlCheckAttendance = "$_urlReports$_localId/$currentDate.json?auth=$_idToken";
-    var reponseCheckText = await Util.fetch(FetchType.GET, urlCheckAttendance);
+  String get currentDateString {
+    return DateFormat('yyyy-MM-dd').format(DateTime.now());
+  }
+
+  String get urlRecordAttendance {
+    return "$_urlReports$_localId/$currentDateString.json?auth=$_idToken";
+  }
+
+  Future<AttendanceStatus> checkAttendance() async {
+    AttendanceStatus message;
+    var reponseCheckText = await Util.fetch(FetchType.GET, urlRecordAttendance);
     final responseData = json.decode(reponseCheckText);
-    return responseData;
+    if (responseData != null) {
+      if (responseData['error'] != null) throw (responseData['error']);
+
+      if (responseData['in'] != null) message = AttendanceStatus.CheckedIn;
+      if (responseData['out'] != null) message = AttendanceStatus.CheckedOut;
+      if (responseData['out'] == null) message = AttendanceStatus.NotCheckOut;
+    } else
+      message = AttendanceStatus.NotCheckIn;
+    return message;
   }
 
   Future<String> recordAttendance(AttendanceType attendanceType) async {
-    DateFormat formattedDate = DateFormat('yyyy-MM-dd');
-    String currentDate = formattedDate.format(DateTime.now());
-    String urlReports = "$_urlReports$_localId/$currentDate.json?auth=$_idToken";
-
-    List<bool> lstChecked = await Future.wait([/*checkIP(),checkLocation*/]);
-    bool allCheckedTrue = lstChecked.contains(false);
-
-    if (allCheckedTrue) {
-      if (!lstChecked[0]) return 'Wrong IP';
-      return 'Wrong Location';
-    }
-
-    final checkAttendanceData = await checkAttendance();
-    if (checkAttendanceData != null) {
-      if (checkAttendanceData['error'] != null) return checkAttendanceData['error'];
-    }
-
-    var responseText;
     try {
+      List<bool> lstChecked = await Future.wait([/*checkIP(), checkLocation()*/]);
+      if (!lstChecked[0]) return 'Wrong IP';
+      if (!lstChecked[1]) return 'Wrong Location';
+
+      final attendanceMsg = await checkAttendance();
+      var responseText;
+
       switch (attendanceType) {
         case AttendanceType.In:
-          if (checkAttendanceData == null) {
-            responseText = await Util.fetch(FetchType.PUT, urlReports, {
+          if (attendanceMsg == AttendanceStatus.NotCheckIn) {
+            responseText = await Util.fetch(FetchType.PUT, urlRecordAttendance, {
               'in': DateTime.now().toString(),
             });
           } else {
             responseText = "{\"error\": \"Checked In Before !!!\"}";
           }
-
           break;
         case AttendanceType.Out:
-          if (checkAttendanceData != null && checkAttendanceData['out'] == null) {
-            responseText = await Util.fetch(FetchType.PATCH, urlReports, {
+          if (attendanceMsg == AttendanceStatus.NotCheckOut) {
+            responseText = await Util.fetch(FetchType.PATCH, urlRecordAttendance, {
               'out': DateTime.now().toString(),
             });
-          } else if (checkAttendanceData['out'] != null)
+          } else if (attendanceMsg == AttendanceStatus.CheckedOut)
             responseText = "{\"error\": \"Checked Out Before !!!!\"}";
           else
             responseText = "{\"error\": \"Not Check In !!!\"}";
