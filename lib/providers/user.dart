@@ -15,9 +15,8 @@ class User with ChangeNotifier {
   Future<bool> checkLocation() async {
     try {
       var responseData = await getDeviceLocation();
-      var reponseText = await fetchOfficeLocationSetting();
 
-      var jsonStr = json.decode(reponseText);
+      var jsonStr = await fetchOfficeLocationSetting();
       final double startLatitude = responseData['lon'];
       final double startLongitude = responseData['lat'];
       final double endLatitude = double.parse(jsonStr['location']['longs']);
