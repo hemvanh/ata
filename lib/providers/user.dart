@@ -10,23 +10,36 @@ class User with ChangeNotifier {
   String photoUrl;
   final Auth auth;
   User({@required this.auth});
+
   Future<bool> checkLocation() async {
-    var deviceLocation = await fetchDeviceLocation();
-    var officeSetting = await auth.fetchOfficeSettings();
-    final double startLatitude = deviceLocation.longitude;
-    final double startLongitude = deviceLocation.latitude;
-    final double endLatitude = double.parse(officeSetting['longs']);
-    final double endLongitude = double.parse(officeSetting['lats']);
-    final double distance = await Geolocator().distanceBetween(startLatitude, startLongitude, endLatitude, endLongitude);
-    return (distance / 1000 <= 50.0) ? true : false;
+    try {
+      var deviceLocation = await fetchDeviceLocation();
+      var officeSetting = await auth.fetchOfficeSettings();
+      final double startLatitude = double.parse(deviceLocation['longs']);
+      final double startLongitude = double.parse(deviceLocation['lats']);
+      final double endLatitude = double.parse(officeSetting['longs']);
+      final double endLongitude = double.parse(officeSetting['lats']);
+      final double distance = await Geolocator().distanceBetween(startLatitude, startLongitude, endLatitude, endLongitude);
+      return (distance / 1000 <= 50.0) ? true : false;
+    } catch (error) {
+      return false;
+    }
   }
 
-  Future<Position> fetchDeviceLocation() async {
-    try {
-      var deviceLocation = await Geolocator().getCurrentPosition();
-      return deviceLocation;
-    } catch (error) {
-      return error;
+  Future<Map<String, dynamic>> fetchDeviceLocation() async {
+    bool isEnabled = await Geolocator().isLocationServiceEnabled();
+    if (isEnabled) {
+      try {
+        var deviceLocation = await Geolocator().getCurrentPosition();
+        return {
+          'longs': deviceLocation.longitude.toString(),
+          'lats': deviceLocation.latitude.toString(),
+        };
+      } catch (error) {
+        return {'error': error.message};
+      }
+    } else {
+      return {'error': 'Location settings are inadequate, check your location settings'};
     }
   }
 }

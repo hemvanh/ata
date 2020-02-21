@@ -117,33 +117,4 @@ class Auth with ChangeNotifier {
     return json.decode(reponseText);
   }
 
-  Future<bool> checkLocation() async {
-    try {
-      var deviceLocation = await fetchDeviceLocation();
-      var officeSetting = await fetchOfficeSettings();
-      // final double startLatitude = deviceLocation;
-      // final double startLongitude = deviceLocation.latitude;
-      final double endLatitude = double.parse(officeSetting['location']['longs']);
-      final double endLongitude = double.parse(officeSetting['location']['lats']);
-      //final double distance = await Geolocator().distanceBetween(startLatitude, startLongitude, endLatitude, endLongitude);
-      // return (distance / 1000 <= 50.0) ? true : false;
-    } catch (error) {
-      return false;
-    }
-  }
-
-  Future<Map<String, dynamic>> fetchDeviceLocation() async {
-    bool isEnabled = await Geolocator().isLocationServiceEnabled();
-    if (isEnabled) {
-      try {
-        var deviceLocation = await Geolocator().getCurrentPosition();
-        return {'result': deviceLocation.latitude.toString(),
-        'result2': deviceLocation.latitude.toString(),};
-      } catch (error) {
-        return {'error': error.message};
-      }
-    } else {
-      return {'error': 'Location settings are inadequate, check your location settings'};
-    }
-  }
 }
