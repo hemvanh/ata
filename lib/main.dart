@@ -5,6 +5,8 @@ import 'package:ata/screens/login_screen.dart';
 import 'package:ata/screens/home_screen.dart';
 import 'package:ata/screens/loading-screen.dart';
 
+import 'providers/user.dart';
+
 void main() => runApp(MyApp());
 
 class MyApp extends StatelessWidget {
@@ -16,6 +18,10 @@ class MyApp extends StatelessWidget {
       providers: [
         ChangeNotifierProvider.value(
           value: Auth(),
+        ),
+        ChangeNotifierProxyProvider<Auth, User>(
+          create: (context) => User(auth: Auth()),
+          update: (context, auth, user) => User(auth: auth),
         ),
       ],
       child: Consumer<Auth>(

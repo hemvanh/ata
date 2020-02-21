@@ -43,4 +43,16 @@ class Util {
       throw HttpException('Network Error!');
     }
   }
+
+  static Future<Map<String, String>> fetchDeviceIP() async {
+    try {
+      var responseText = await fetch(FetchType.GET, 'http://ip-api.com/json');
+      final responseData = json.decode(responseText);
+      return {
+        'result': responseData['query'] ?? 'IP inspection service not available!',
+      };
+    } catch (error) {
+      return {'error': error.toString()};
+    }
+  }
 }
