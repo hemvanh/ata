@@ -19,7 +19,7 @@ class SettingsScreen extends StatelessWidget {
         padding: EdgeInsets.all(16.0),
         child: Form(
           child: FutureBuilder(
-            future: Provider.of<Auth>(context, listen: false).fetchOfficeSettings(),
+            future: Provider.of<Auth>(context, listen: false).checkLocation(),
             builder: (ctx, AsyncSnapshot<dynamic> snapshot) {
               if (snapshot.hasData) {
                 ipController.text = snapshot.data['ip'];

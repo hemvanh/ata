@@ -8,20 +8,17 @@ class User with ChangeNotifier {
   String email;
   String displayName;
   String photoUrl;
-  final Auth _auth;
-  User({@required Auth auth}) : _auth = auth;
+  final Auth auth;
+  User({@required this.auth});
   Future<bool> checkLocation() async {
     var deviceLocation = await fetchDeviceLocation();
-    var locationSetting = await _auth.fetchOfficeSettings();
+    var officeSetting = await auth.fetchOfficeSettings();
     final double startLatitude = deviceLocation.longitude;
     final double startLongitude = deviceLocation.latitude;
-    final double endLatitude = double.parse(locationSetting['longs']);
-    final double endLongitude = double.parse(locationSetting['lats']);
+    final double endLatitude = double.parse(officeSetting['longs']);
+    final double endLongitude = double.parse(officeSetting['lats']);
     final double distance = await Geolocator().distanceBetween(startLatitude, startLongitude, endLatitude, endLongitude);
-    if (distance / 1000 < 50.0) {
-      return true;
-    }
-    return false;
+    return (distance / 1000 <= 50.0) ? true : false;
   }
 
   Future<Position> fetchDeviceLocation() async {
