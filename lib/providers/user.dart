@@ -1,5 +1,6 @@
 import 'dart:convert';
 
+import 'package:dartz/dartz.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import '../util.dart';
@@ -23,24 +24,24 @@ class User with ChangeNotifier {
     return "$_urlReports$_localId/$currentDateString.json?auth=$_idToken";
   }
 
-  Future<Map<String, dynamic>> checkAttendance() async {
+  Future<Either<String, AttendanceStatus>> checkAttendance() async {
     AttendanceStatus status;
     var responseData;
     try {
       var reponseText = await Util.fetch(FetchType.GET, urlRecordAttendance);
       responseData = json.decode(reponseText);
     } catch (error) {
-      return {'error': error.toString()};
+      return Left(error.toString());
     }
 
     if (responseData != null) {
-      if (responseData['error'] != null) return {'error': responseData['error']};
+      if (responseData['error'] != null) return Left(responseData['error']);
       if (responseData['in'] != null) status = AttendanceStatus.CheckedIn;
       if (responseData['out'] != null) status = AttendanceStatus.CheckedOut;
       if (responseData['out'] == null) status = AttendanceStatus.NotCheckOut;
     } else
       status = AttendanceStatus.NotCheckIn;
-    return {'result': status};
+    return Right(status);
   }
 
   Future<String> recordAttendance(AttendanceType attendanceType) async {
@@ -48,14 +49,15 @@ class User with ChangeNotifier {
     if (!lstChecked[0]) return 'Wrong IP';
     if (!lstChecked[1]) return 'Wrong Location';
 
-    final attendanceStatus = await checkAttendance();
-    if (attendanceStatus['error'] != null) return attendanceStatus['error'];
+    final Either<String, AttendanceStatus> resAttendanceStatus = await checkAttendance();
+    final attendanceStatus = resAttendanceStatus.fold((error) => error, (status) => status);
+    if (attendanceStatus is! AttendanceStatus) return attendanceStatus;
 
     var responseText;
     try {
       switch (attendanceType) {
         case AttendanceType.In:
-          if (attendanceStatus['result'] == AttendanceStatus.NotCheckIn) {
+          if (attendanceStatus == AttendanceStatus.NotCheckIn) {
             responseText = await Util.fetch(FetchType.PUT, urlRecordAttendance, {
               'in': DateTime.now().toString(),
             });
@@ -63,11 +65,11 @@ class User with ChangeNotifier {
             return "Checked In Before !!!";
           break;
         case AttendanceType.Out:
-          if (attendanceStatus['result'] == AttendanceStatus.NotCheckOut) {
+          if (attendanceStatus == AttendanceStatus.NotCheckOut) {
             responseText = await Util.fetch(FetchType.PATCH, urlRecordAttendance, {
               'out': DateTime.now().toString(),
             });
-          } else if (attendanceStatus['result'] == AttendanceStatus.CheckedOut)
+          } else if (attendanceStatus == AttendanceStatus.CheckedOut)
             return "Checked Out Before !!!!";
           else
             return "Not Check In !!!";
