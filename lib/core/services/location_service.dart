@@ -1,27 +1,27 @@
 import 'package:ata/core/models/failure.dart';
 import 'package:ata/core/models/location.dart';
-import 'package:ata/core/models/office.dart';
+import 'package:ata/core/services/office_service.dart';
 import 'package:dartz/dartz.dart';
 import 'package:geolocator/geolocator.dart';
 
 class LocationService {
-  final Office _officeSetting;
+  final OfficeService _officeService;
 
-  LocationService(Office officeSetting) : _officeSetting = officeSetting;
+  LocationService(OfficeService officeService) : _officeService = officeService;
 
-  Future<bool> checkDistanceLocation() async {
-    try {
-      return (await fetchDeviceLocation()).fold((failure) => throw failure.toString(), (location) async {
-        final double startLatitude = location.lat;
-        final double startLongitude = location.lng;
-        final double endLatitude = _officeSetting.lat;
-        final double endLongitude = _officeSetting.lon;
-        final double distance = await Geolocator().distanceBetween(startLatitude, startLongitude, endLatitude, endLongitude);
-        return (distance / 1000 <= _officeSetting.authRange) ? true : false;
-      });
-    } catch (error) {
-      return throw error.toString();
-    }
+  Future<Either<Failure, bool>> checkDistanceLocation(Location deviceLocation, Location officeLocation, double authRange) async {
+    final double startLatitude = deviceLocation.lat;
+    final double startLongitude = deviceLocation.lng;
+    final double endLatitude = officeLocation.lat;
+    final double endLongitude = officeLocation.lng;
+    final double distance = await Geolocator().distanceBetween(startLatitude, startLongitude, endLatitude, endLongitude);
+    return Right((distance / 1000 <= authRange) ? true : false);
+  }
+
+  Future<void> getOfficeLocation() async {
+    _officeService.officeSettings.fold((failure) => failure.toString(), (local) {
+      Location(lng: local.lon, lat: local.lat);
+    });
   }
 
   Future<Either<Failure, Location>> fetchDeviceLocation() async {
