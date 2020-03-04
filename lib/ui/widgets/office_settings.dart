@@ -1,5 +1,4 @@
 import 'package:ata/core/notifiers/office_settings_notifier.dart';
-import 'package:ata/core/services/location_service.dart';
 import 'package:ata/ui/widgets/ata_button.dart';
 import 'package:ata/ui/widgets/base_widget.dart';
 import 'package:flutter/material.dart';

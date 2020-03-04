@@ -1,4 +1,3 @@
-import 'package:ata/core/services/location_service.dart';
 import 'package:ata/core/services/office_service.dart';
 import 'package:provider/provider.dart';
 import 'package:provider/single_child_widget.dart';
@@ -24,10 +23,6 @@ List<SingleChildWidget> proxyServices = [
     update: (_, authService, __) =>
         OfficeService()..setAuthToken(authService.idToken),
   ),
-  // ProxyProvider<OfficeService, LocationService>(
-  //   update: (_, officeService, __) =>
-  //       LocationService(officeService.officeSettings),
-  // ),
 ];
 
 List<SingleChildWidget> proxyUiServices = [];
