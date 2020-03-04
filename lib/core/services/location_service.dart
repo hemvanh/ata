@@ -13,7 +13,7 @@ class LocationService {
     try {
       return (await fetchDeviceLocation()).fold((failure) => throw failure.toString(), (location) async {
         final double startLatitude = location.lat;
-        final double startLongitude = location.long;
+        final double startLongitude = location.lng;
         final double endLatitude = _officeSetting.lat;
         final double endLongitude = _officeSetting.lon;
         final double distance = await Geolocator().distanceBetween(startLatitude, startLongitude, endLatitude, endLongitude);
@@ -29,7 +29,7 @@ class LocationService {
     if (isEnabled) {
       try {
         var device = await Geolocator().getCurrentPosition();
-        return Right(Location(lat: device.latitude, long: device.longitude));
+        return Right(Location(lat: device.latitude, lng: device.longitude));
       } catch (failure) {
         return Left(failure);
       }

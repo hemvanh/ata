@@ -1,23 +1,23 @@
 import 'package:flutter/foundation.dart';
 
 class Location {
-  double long;
+  double lng;
   double lat;
 
   Location({
-    @required this.long,
+    @required this.lng,
     @required this.lat,
   });
 
   factory Location.fromJson(Map<String, dynamic> parsedJson) {
     return Location(
-      long: parsedJson['long'],
+      lng: parsedJson['lng'],
       lat: parsedJson['lat'],
     );
   }
   Map<String, dynamic> toJson() {
     return {
-      'long': this.long,
+      'lng': this.lng,
       'lat': this.lat,
     };
   }
