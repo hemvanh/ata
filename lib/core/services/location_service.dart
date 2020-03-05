@@ -18,10 +18,11 @@ class LocationService {
     return Right((distance / 1000 <= authRange) ? true : false);
   }
 
-  Future<void> getOfficeLocation() async {
-    _officeService.officeSettings.fold((failure) => failure.toString(), (local) {
-      Location(lng: local.lon, lat: local.lat);
-    });
+  Location get getOfficeLocation {
+    return _officeService.officeSettings.fold(
+      (failure) => throw failure.toString(),
+      (lacation) => Location(lng: lacation.lon, lat: lacation.lat),
+    );
   }
 
   Future<Either<Failure, Location>> fetchDeviceLocation() async {
