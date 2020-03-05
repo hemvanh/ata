@@ -1,10 +1,13 @@
 import 'package:ata/core/models/auth.dart';
 import 'package:ata/core/models/failure.dart';
+import 'package:ata/core/models/user.dart';
+import 'package:ata/factories.dart';
 import 'package:ata/util.dart';
 import 'package:dartz/dartz.dart';
 import 'package:intl/intl.dart';
 
 enum AttendanceStatus { CheckedIn, CheckedOut, NotYetCheckedIn, NotYetCheckedOut }
+enum UserType { Get, Update }
 
 class UserService {
   String _urlReports = "https://attendance-dcecd.firebaseio.com/reports";
@@ -25,6 +28,19 @@ class UserService {
 
   String get urlRecordAttendance {
     return "$_urlReports/$_localId/$currentDateString.json?auth=$_idToken";
+  }
+
+  String get _apiKey {
+    return Auth.apiKey;
+  }
+
+  String _getUrlUser(UserType userType) {
+    switch (userType) {
+      case UserType.Get:
+        return "https://identitytoolkit.googleapis.com/v1/accounts:lookup?key=$_apiKey";
+      default:
+        return "https://identitytoolkit.googleapis.com/v1/accounts:update?key=$_apiKey";
+    }
   }
 
   Future<Either<Failure, AttendanceStatus>> getAttendanceStatus() async {
@@ -105,5 +121,27 @@ class UserService {
         }
       },
     );
+  }
+
+  Future<Either<Failure, User>> fetchUser() async {
+    var userData;
+    try {
+      userData = await Util.request(RequestType.POST, _getUrlUser(UserType.Get), {
+        'idToken': _idToken,
+      });
+    } catch (failure) {
+      return Left(failure);
+    }
+
+    if (userData['error'] != null) return Left(Failure(userData['error']));
+    return Right(make<User>(userData["users"][0]));
+  }
+
+  Future<Either<Failure, User>> updateUser(String displayName, String photoUrl) async {
+    return await Util.requestEither<User>(RequestType.POST, _getUrlUser(UserType.Update), {
+      'idToken': _idToken,
+      'displayName': displayName,
+      'photoUrl': photoUrl,
+    });
   }
 }
