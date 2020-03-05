@@ -14,8 +14,12 @@ class LocationService {
     final double startLongitude = deviceLocation.lng;
     final double endLatitude = officeLocation.lat;
     final double endLongitude = officeLocation.lng;
-    final double distance = await Geolocator().distanceBetween(startLatitude, startLongitude, endLatitude, endLongitude);
-    return Right((distance / 1000 <= authRange) ? true : false);
+    try {
+      final double distance = await Geolocator().distanceBetween(startLatitude, startLongitude, endLatitude, endLongitude);
+      return Right(distance <= authRange);
+    } catch (failure) {
+      return Left(failure);
+    }
   }
 
   Location get getOfficeLocation {
