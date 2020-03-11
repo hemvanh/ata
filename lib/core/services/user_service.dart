@@ -116,7 +116,7 @@ class UserService {
           switch (attendanceStatus) {
             case AttendanceStatus.NotYetCheckedIn:
               responseData = await Util.request(RequestType.PUT, urlRecordAttendance, {
-                'in': DateTime.now().toIso8601String(),
+                'in': _ipInfoService.getServerDate(),
               });
               return responseData['error'] != null ? responseData['error'] : null;
             default:
@@ -141,7 +141,7 @@ class UserService {
           switch (attendanceStatus) {
             case AttendanceStatus.NotYetCheckedOut:
               responseData = await Util.request(RequestType.PATCH, urlRecordAttendance, {
-                'out': DateTime.now().toIso8601String(),
+                'out': _ipInfoService.getServerDate(),
               });
               return responseData['error'] != null ? responseData['error'] : null;
             case AttendanceStatus.CheckedOut:
