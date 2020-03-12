@@ -35,6 +35,13 @@ class IpInfoService {
     );
   }
 
+  String getServerDateTime() {
+    return _ipInfo.fold(
+      (failure) => failure.toString(),
+      (ipInfo) => ipInfo.serverDateTime,
+    );
+  }
+
   String getOfficeIp() {
     return _officeService.officeSettings.fold(
       //* '- ' fix error when No Internet shows green status
@@ -53,7 +60,7 @@ class IpInfoService {
   Future<void> fetchDeviceIpInfo() async {
     await Util.requestEither<IpInfo>(
       RequestType.GET,
-      'http://botest.igk99.com/public/ipdate.aspx',
+      'http://botest.inus.pw/api/dateip',
     ).then((value) => _setIpInfo(value));
   }
 }

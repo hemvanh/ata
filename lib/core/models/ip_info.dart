@@ -9,6 +9,7 @@ class IpInfo {
   final String country;
   final String timezone;
   final String serverDate;
+  final String serverDateTime;
 
   IpInfo({
     @required this.ipAddress,
@@ -19,18 +20,20 @@ class IpInfo {
     @required this.country,
     @required this.timezone,
     @required this.serverDate,
+    @required this.serverDateTime,
   });
 
   factory IpInfo.fromJson(Map<String, dynamic> parsedJson) {
     return IpInfo(
       city: parsedJson['city'],
       country: parsedJson['country'],
-      ipAddress: parsedJson['ClientIp'],
+      ipAddress: parsedJson['clientIp'],
       ipLat: parsedJson['lat'],
       ipLng: parsedJson['lng'],
       org: parsedJson['org'],
       timezone: parsedJson['timezone'],
-      serverDate: parsedJson['ServerDate'],
+      serverDate: parsedJson['serverDate'],
+      serverDateTime: parsedJson['serverDateTime'],
     );
   }
 }
