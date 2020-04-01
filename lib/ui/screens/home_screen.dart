@@ -1,4 +1,4 @@
-import 'package:ata/ui/widgets/reauth_redirect.dart';
+import 'package:ata/ui/widgets/re_auth_redirect.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:ata/ui/screens/check_in_screen.dart';
@@ -7,7 +7,6 @@ import 'package:ata/ui/screens/login_screen.dart';
 import 'package:ata/core/services/auth_service.dart';
 import 'package:ata/ui/screens/report_screen.dart';
 import 'package:ata/ui/screens/settings_screen.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 
 class HomeScreen extends StatefulWidget {
   static const routeName = '/home-screen';
@@ -71,12 +70,14 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
       case AppLifecycleState.paused:
         break;
       case AppLifecycleState.resumed:
-        final prefs = await SharedPreferences.getInstance();
-        bool isValidToken = await _authService.autoSignIn();
-        if (!prefs.containsKey('loginData'))
+        bool isLoggedInBefore = await _authService.checkSharedPref();
+        if (isLoggedInBefore) {
+          bool isValidToken = await _authService.validateToken();
+          if (!isValidToken) {
+            Navigator.of(context).pushReplacementNamed(ReAuthRedirect.routeName);
+          }
+        } else {
           Navigator.of(context).pushReplacementNamed(LoginScreen.routeName);
-        else if (!isValidToken) {
-          Navigator.of(context).pushReplacementNamed(ReauthRedirect.routeName);
         }
         break;
       case AppLifecycleState.inactive:

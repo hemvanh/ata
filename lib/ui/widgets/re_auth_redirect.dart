@@ -2,18 +2,18 @@ import 'package:ata/core/services/auth_service.dart';
 import 'package:ata/core/services/fingerprint_service.dart';
 import 'package:ata/ui/screens/home_screen.dart';
 import 'package:ata/ui/screens/login_screen.dart';
-import 'package:ata/ui/widgets/auth_redirect.dart';
-import 'package:ata/ui/widgets/qrcode_scanner_dialog.dart';
+import 'package:ata/ui/widgets/qr_code_scanner_dialog.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
-class ReauthRedirect extends StatefulWidget {
+class ReAuthRedirect extends StatefulWidget {
   static const routeName = '/reauth-redirect';
   @override
-  _ReauthRedirectState createState() => _ReauthRedirectState();
+  _ReAuthRedirectState createState() => _ReAuthRedirectState();
 }
 
-class _ReauthRedirectState extends State<ReauthRedirect> {
+class _ReAuthRedirectState extends State<ReAuthRedirect> {
   AuthService _authService;
   FingerPrintService _fingerPrintService;
 
@@ -44,15 +44,15 @@ class _ReauthRedirectState extends State<ReauthRedirect> {
     navTo(LoginScreen.routeName);
   }
 
-  Future showQrCodeSannerDialog() async {
-    await showDialog(
+  Future<bool> showQrCodeSannerDialog() async {
+    return await showDialog(
       barrierDismissible: false,
       context: context,
       builder: (context) {
         //* Prevent Dialog dismissed on Back button pressed
         return WillPopScope(
           onWillPop: () async => false,
-          child: QrcodeScannerDialog(),
+          child: QrCodeScannerDialog(),
         );
       },
     );
@@ -64,35 +64,49 @@ class _ReauthRedirectState extends State<ReauthRedirect> {
     });
   }
 
-  Future<bool> reauth() async {
-    if (!isDialogShown) {
-      bool isAuth = false;
+  Future<bool> isLoggedInBefore() async {
+    final prefs = await SharedPreferences.getInstance();
+    if (!prefs.containsKey('loginData')) {
+      prefs.clear();
+      return false;
+    } else
+      return true;
+  }
 
-      // Fingerscan authentication
+  Future<bool> reauth() async {
+    //* Check if logged in before
+    bool isLoggedInBefore = await _authService.checkSharedPref();
+    if (!isLoggedInBefore) return false;
+
+    //* If Logged in before, then the token is still valid ?
+    bool isValidToken = await _authService.validateToken();
+    if (isValidToken)
+      return true;
+    else {
+      bool isReAuth = false;
+
+      //* Fingerscan authentication
       (await _fingerPrintService.authenticate()).fold(
         (failure) async {
-          isAuth = false;
+          isReAuth = false;
         },
         (authenticated) async {
-          isAuth = authenticated;
+          isReAuth = authenticated;
         },
       );
 
-      //QR Code authentication
-      if (!isAuth) {
-        await showQrCodeSannerDialog();
+      //* QR Code authentication
+      if (!isReAuth) {
+        isReAuth = await showQrCodeSannerDialog();
       }
 
-      // Refresh Token if re-authenticated
-      if (isAuth) {
+      //* Refresh Token if re-authenticated
+      if (isReAuth) {
         String tokenError = await _authService.refeshToken();
         if (tokenError != null) await _signOutToLoginScreen();
       }
       isDialogShown = true;
-      return isAuth;
-    } else {
-      navTo(AuthRedirect.routeName);
-      return false;
+      return isReAuth;
     }
   }
 }

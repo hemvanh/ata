@@ -9,6 +9,7 @@ import 'package:ata/core/models/auth.dart';
 
 enum AuthType { SignUp, SignIn }
 final String dbUrl = 'https://atapp-7720c.firebaseio.com';
+
 class AuthService {
   //* Model reference
   Either<Failure, Auth> _auth;
@@ -90,13 +91,17 @@ class AuthService {
     await Future.delayed(Duration(milliseconds: 500));
   }
 
-  Future<bool> autoSignIn() async {
+  Future<bool> checkSharedPref() async {
     final prefs = await SharedPreferences.getInstance();
     if (!prefs.containsKey('loginData')) {
       prefs.clear();
       return false;
-    }
+    } else
+      return true;
+  }
 
+  Future<bool> validateToken() async {
+    final prefs = await SharedPreferences.getInstance();
     final loginData = json.decode(prefs.getString('loginData')) as Map<String, Object>;
     if (loginData['expiringDate'] == null) {
       prefs.clear();
@@ -126,7 +131,8 @@ class AuthService {
       });
       if (tokenData['error'] != null) return tokenData['error'];
 
-      loginData['expiringDate'] = DateTime.now().add(Duration(seconds: int.parse(tokenData['expires_in']))).toIso8601String();
+      loginData['expiringDate'] =
+          DateTime.now().add(Duration(seconds: int.parse(tokenData['expires_in']))).toIso8601String();
       loginData['idToken'] = tokenData['id_token'];
       final loginJsonString = json.encode(loginData);
       prefs.setString('loginData', loginJsonString);

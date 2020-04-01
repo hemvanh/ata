@@ -1,6 +1,5 @@
 import 'package:ata/providers.dart';
-import 'package:ata/ui/widgets/auth_redirect.dart';
-import 'package:ata/ui/widgets/reauth_redirect.dart';
+import 'package:ata/ui/widgets/re_auth_redirect.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
@@ -21,12 +20,11 @@ class MyApp extends StatelessWidget {
         theme: ThemeData(
           primarySwatch: Colors.green,
         ),
-        home: AuthRedirect(),
+        home: ReAuthRedirect(),
         routes: {
           HomeScreen.routeName: (_) => HomeScreen(),
           LoginScreen.routeName: (_) => LoginScreen(),
-          AuthRedirect.routeName: (_) => AuthRedirect(),
-          ReauthRedirect.routeName: (_) => ReauthRedirect(),
+          ReAuthRedirect.routeName: (_) => ReAuthRedirect(),
         },
       ),
     );
