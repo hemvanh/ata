@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 class AuthRedirect extends StatelessWidget {
+  static const routeName = '/auth-redirect';
   @override
   Widget build(BuildContext context) {
     final authService = Provider.of<AuthService>(context);

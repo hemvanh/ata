@@ -1,5 +1,4 @@
-import 'package:ata/core/services/fingerprint_service.dart';
-import 'package:ata/ui/widgets/qrcode_scanner_dialog.dart';
+import 'package:ata/ui/widgets/reauth_redirect.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:ata/ui/screens/check_in_screen.dart';
@@ -18,7 +17,6 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
   AuthService _authService;
-  FingerPrintService _fingerPrintService;
   List<Map<String, Object>> _tabs;
   final List<Widget> _screens = [
     CheckInScreen(),
@@ -31,6 +29,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     _tabs = [
       {
         'title': Text('Check In/Out'),
@@ -50,9 +49,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
       },
     ];
     _pageController = new PageController();
-    WidgetsBinding.instance.addObserver(this);
     _authService = Provider.of<AuthService>(context, listen: false);
-    _fingerPrintService = Provider.of<FingerPrintService>(context, listen: false);
   }
 
   Future<void> _signOutToLoginScreen() async {
@@ -74,25 +71,12 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
       case AppLifecycleState.paused:
         break;
       case AppLifecycleState.resumed:
-        if (!isDialogCreated) {
-          final prefs = await SharedPreferences.getInstance();
-          if (prefs.containsKey('loginData')) {
-            bool isValidToken = await _authService.autoSignIn();
-            if (!isValidToken) {
-              (await _fingerPrintService.authenticate()).fold(
-                (failure) async {
-                  await showQrCodeSannerDialog();
-                },
-                (authenticated) async {
-                  if (authenticated) {
-                    String tokenError = await _authService.refeshToken();
-                    if (tokenError != null) await _signOutToLoginScreen();
-                  } else
-                    await showQrCodeSannerDialog();
-                },
-              );
-            }
-          }
+        final prefs = await SharedPreferences.getInstance();
+        bool isValidToken = await _authService.autoSignIn();
+        if (!prefs.containsKey('loginData'))
+          Navigator.of(context).pushReplacementNamed(LoginScreen.routeName);
+        else if (!isValidToken) {
+          Navigator.of(context).pushReplacementNamed(ReauthRedirect.routeName);
         }
         break;
       case AppLifecycleState.inactive:
@@ -110,20 +94,6 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
   void _changeTab(int index) {
     setState(() {
       this._selectedTabIndex = index;
-    });
-  }
-
-  bool isDialogCreated = false;
-  Future showQrCodeSannerDialog() async {
-    await showDialog(
-      barrierDismissible: false,
-      context: context,
-      builder: (context) {
-        isDialogCreated = true;
-        return QrcodeScannerDialog();
-      },
-    ).then((_) {
-      isDialogCreated = false;
     });
   }
 

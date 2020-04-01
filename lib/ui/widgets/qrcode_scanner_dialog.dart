@@ -1,4 +1,5 @@
 import 'package:ata/core/services/auth_service.dart';
+import 'package:ata/ui/screens/home_screen.dart';
 import 'package:ata/ui/screens/login_screen.dart';
 import 'package:encrypt/encrypt.dart' as encrypt;
 import 'package:flutter/material.dart';
@@ -35,7 +36,7 @@ class QrcodeScannerDialogState extends State<QrcodeScannerDialog> {
     if (isValidQrCode(scanResult)) {
       String tokenError = await _authService.refeshToken();
       if (tokenError != null) await _signOutToLoginScreen();
-      Navigator.of(context).pop();
+      Navigator.of(context).pushReplacementNamed(HomeScreen.routeName);
     } else {
       setState(() {});
     }
@@ -62,7 +63,7 @@ class QrcodeScannerDialogState extends State<QrcodeScannerDialog> {
   @override
   Widget build(BuildContext context) {
     return AlertDialog(
-      title: Text('Please scan QR code from your office website'),
+      title: Text('Quickly Re-Login by Scanning the website QR-Code'),
       content: Column(
         mainAxisSize: MainAxisSize.min,
         children: <Widget>[

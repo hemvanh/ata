@@ -29,6 +29,9 @@ var qrPopup = Ext.create('Ext.window.Window', {
                 }
             });
         },
+        'beforehide': function () {
+            document.getElementById("qrcode").innerHTML = '<i class="fa fa-spinner fa-spin fa-3x fa-fw"></i>';
+        }
     },
     items: {
         xtype: 'component',
