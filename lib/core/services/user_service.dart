@@ -1,6 +1,7 @@
 import 'package:ata/core/models/attendance_record.dart';
 import 'package:ata/core/models/auth.dart';
 import 'package:ata/core/models/failure.dart';
+import 'package:ata/core/models/ip_info.dart';
 import 'package:ata/core/models/office.dart';
 import 'package:ata/core/models/user.dart';
 import 'package:ata/core/services/auth_service.dart';
@@ -12,7 +13,12 @@ import 'package:ata/util.dart';
 import 'package:dartz/dartz.dart';
 import 'package:intl/intl.dart';
 
-enum AttendanceStatus { CheckedIn, CheckedOut, NotYetCheckedIn, NotYetCheckedOut }
+enum AttendanceStatus {
+  CheckedIn,
+  CheckedOut,
+  NotYetCheckedIn,
+  NotYetCheckedOut
+}
 
 class UserService {
   String _urlReports = dbUrl + "/reports";
@@ -21,8 +27,8 @@ class UserService {
   final LocationService _locationService;
   final IpInfoService _ipInfoService;
   final OfficeService _officeService;
-  UserService(AuthService authService, LocationService locationService, IpInfoService ipInfoService,
-      OfficeService officeService)
+  UserService(AuthService authService, LocationService locationService,
+      IpInfoService ipInfoService, OfficeService officeService)
       : _authService = authService,
         _locationService = locationService,
         _ipInfoService = ipInfoService,
@@ -48,8 +54,14 @@ class UserService {
     return _ipInfoService.getServerDate();
   }
 
-  String get currentDateTimeString {
-    return _ipInfoService.getServerDateTime();
+  Future<String> get currentDateTimeString async {
+    return (await Util.requestEither<IpInfo>(
+      RequestType.GET,
+      _ipInfoService.getDateIpServiceUrl,
+    )).fold(
+      (failure) => throw (failure.toString()),
+      (ipInfo) => ipInfo.serverDateTime,
+    );
   }
 
   String get urlRecordAttendance {
@@ -125,7 +137,9 @@ class UserService {
   Future<String> checkIn({String lateReason = ''}) async {
     String checkMsg = await checkLocationAndIp();
     if (checkMsg != null) return checkMsg;
-    if(isEarlyCheckIn()) return 'Too early! Please check in within Working hours period.';
+    if (isEarlyCheckIn()) return 'Too early! Please check in within Working hours period.';
+    String serverDateTime = await currentDateTimeString;
+
     return (await fetchAttendanceStatus()).fold(
       (failure) => failure.toString(),
       (attendanceStatus) async {
@@ -134,7 +148,7 @@ class UserService {
           switch (attendanceStatus) {
             case AttendanceStatus.NotYetCheckedIn:
               responseData = await Util.request(RequestType.PUT, urlRecordAttendance, {
-                'checkInTime': DateFormat('yyyy-MM-dd HH:mm:ss').parse(currentDateTimeString).toIso8601String(),
+                'checkInTime': DateFormat('yyyy-MM-dd HH:mm:ss').parse(serverDateTime).toIso8601String(),
                 'lateReason': lateReason
               });
               return responseData['error'] != null ? responseData['error'] : null;
@@ -151,6 +165,7 @@ class UserService {
   Future<String> checkOut({String earlyReason = ''}) async {
     String checkMsg = await checkLocationAndIp();
     if (checkMsg != null) return checkMsg;
+    String serverDateTime = await currentDateTimeString;
 
     return (await fetchAttendanceStatus()).fold(
       (failure) => failure.toString(),
@@ -160,7 +175,7 @@ class UserService {
           switch (attendanceStatus) {
             case AttendanceStatus.NotYetCheckedOut:
               responseData = await Util.request(RequestType.PATCH, urlRecordAttendance, {
-                'checkOutTime': DateFormat("yyyy-MM-dd HH:mm:ss").parse(currentDateTimeString).toIso8601String(),
+                'checkOutTime': DateFormat("yyyy-MM-dd HH:mm:ss").parse(serverDateTime).toIso8601String(),
                 'earlyReason': earlyReason
               });
               return responseData['error'] != null ? responseData['error'] : null;
