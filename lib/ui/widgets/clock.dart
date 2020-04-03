@@ -1,12 +1,7 @@
 import 'dart:async';
 
-import 'package:analog_clock/analog_clock.dart';
 import 'package:analog_clock/analog_clock_painter.dart';
-import 'package:ata/core/models/ip_info.dart';
-import 'package:ata/core/notifiers/ip_info_notifier.dart';
 import 'package:ata/core/services/ip_info_service.dart';
-import 'package:ata/ui/widgets/base_widget.dart';
-import 'package:ata/util.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
@@ -19,12 +14,20 @@ class Clock extends StatefulWidget {
 class _ClockState extends State<Clock> {
   DateTime serverDateTime;
   Timer timer;
-  IpInfoService _infoService;
+  IpInfoService _ipInfoService;
 
   @override
   void initState() {
-    _infoService = Provider.of<IpInfoService>(context, listen: false);
-    serverDateTime = DateTime.parse("2020-04-01 12:07:00");
+    serverDateTime = DateTime.parse(DateTime.now().toString());
+    _ipInfoService = Provider.of<IpInfoService>(context, listen: false);
+    _ipInfoService.refreshServerTime().then((value) {
+      value.fold((failure) {
+        serverDateTime = DateTime.parse(DateTime.now().toString());
+      }, (ipInfo) {
+        serverDateTime = DateTime.parse(ipInfo.serverDateTime);
+      });
+      setState(() {});
+    });
     timer = Timer.periodic(Duration(seconds: 1), (_) => _updateTime());
     super.initState();
   }
@@ -33,13 +36,6 @@ class _ClockState extends State<Clock> {
   void dispose() {
     super.dispose();
     timer.cancel();
-  }
-
-  Future<void> _getServerDateTime() async {
-    await Util.requestEither<IpInfo>(
-      RequestType.GET,
-      _infoService.getDateIpServiceUrl,
-    );
   }
 
   void _updateTime() {
@@ -59,8 +55,8 @@ class _ClockState extends State<Clock> {
       second++;
     }
     setState(() {
-      serverDateTime = DateTime.parse(
-          "$serverDate ${hour.toString().padLeft(2, "0")}:${minute.toString().padLeft(2, "0")}:${second.toString().padLeft(2, "0")}");
+      serverDateTime =
+          DateTime.parse("$serverDate ${hour.toString().padLeft(2, "0")}:${minute.toString().padLeft(2, "0")}:${second.toString().padLeft(2, "0")}");
     });
   }
 
@@ -113,12 +109,7 @@ class _ClockState extends State<Clock> {
               fontStyle: FontStyle.italic,
               fontSize: 20,
               color: Colors.green[600],
-              shadows: [
-                Shadow(
-                    color: Colors.grey,
-                    offset: Offset(1.0, 1.0),
-                    blurRadius: 5.0)
-              ],
+              shadows: [Shadow(color: Colors.grey, offset: Offset(1.0, 1.0), blurRadius: 5.0)],
             ),
           ),
         )
