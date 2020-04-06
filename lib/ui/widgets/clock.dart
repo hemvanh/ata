@@ -23,12 +23,7 @@ class _ClockState extends State<Clock> {
     serverDateTime = DateTime.now();
     _ipInfoService = Provider.of<IpInfoService>(context, listen: false);
     _ipInfoService.refreshService().then((_) {
-      _ipInfoService.ipInfo.fold((failure) {
-        serverDateTime = DateTime.now();
-      }, (ipInfo) {
-        serverDateTime = DateTime.parse(ipInfo.serverDateTime);
-      });
-      setState(() {});
+      serverDateTime = DateFormat("dd-MM-yyyy HH:mm:ss").parse(_ipInfoService.getServerDateTime());
     });
     timer = Timer.periodic(Duration(seconds: 1), (_) => _updateTime());
   }
@@ -40,9 +35,11 @@ class _ClockState extends State<Clock> {
   }
 
   void _updateTime() {
-    setState(() {
-      serverDateTime = serverDateTime.add(Duration(seconds: 1));
-    });
+    if (mounted) {
+      setState(() {
+        serverDateTime = serverDateTime.add(Duration(seconds: 1));
+      });
+    }
   }
 
   @override
@@ -74,14 +71,13 @@ class _ClockState extends State<Clock> {
                   height: 100.0,
                   child: CustomPaint(
                     painter: AnalogClockPainter(
-                      datetime: serverDateTime,
                       showAllNumbers: true,
                       tickColor: Colors.green[600],
                       secondHandColor: Colors.green[600],
                       numberColor: Colors.green[600],
                       showNumbers: false,
                       showDigitalClock: false,
-                      showSecondHand: true,
+                      datetime: serverDateTime,
                     ),
                   ))),
         ),
