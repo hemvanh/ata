@@ -21,14 +21,6 @@ class IpInfoService {
     await fetchDeviceIpInfo();
   }
 
-  Future<Either<Failure, IpInfo>> refreshServerTime() async {
-    await _officeService.fetchOfficeSettings();
-    return (await Util.requestEither<IpInfo>(
-      RequestType.GET,
-      getDateIpServiceUrl,
-    ));
-  }
-
   String getDeviceIp() {
     return _ipInfo.fold(
       (failure) => failure.toString(),

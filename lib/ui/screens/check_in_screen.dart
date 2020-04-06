@@ -11,7 +11,7 @@ class CheckInScreen extends StatelessWidget {
     return AtaScreen(
       body: Column(
         children: <Widget>[
-         AtaMapOffice(),
+          AtaMapOffice(),
           DeviceIp(),
           Padding(
             padding: const EdgeInsets.only(top: 20.0),

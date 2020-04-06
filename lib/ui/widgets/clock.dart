@@ -18,18 +18,19 @@ class _ClockState extends State<Clock> {
 
   @override
   void initState() {
-    serverDateTime = DateTime.parse(DateTime.now().toString());
+    super.initState();
+
+    serverDateTime = DateTime.now();
     _ipInfoService = Provider.of<IpInfoService>(context, listen: false);
-    _ipInfoService.refreshServerTime().then((value) {
-      value.fold((failure) {
-        serverDateTime = DateTime.parse(DateTime.now().toString());
+    _ipInfoService.refreshService().then((_) {
+      _ipInfoService.ipInfo.fold((failure) {
+        serverDateTime = DateTime.now();
       }, (ipInfo) {
         serverDateTime = DateTime.parse(ipInfo.serverDateTime);
       });
       setState(() {});
     });
     timer = Timer.periodic(Duration(seconds: 1), (_) => _updateTime());
-    super.initState();
   }
 
   @override
@@ -39,24 +40,8 @@ class _ClockState extends State<Clock> {
   }
 
   void _updateTime() {
-    String serverDate = DateFormat("yyyy-MM-dd").format(serverDateTime);
-    int hour = serverDateTime.hour;
-    int minute = serverDateTime.minute;
-    int second = serverDateTime.second;
-    if (second == 59) {
-      second = 0;
-      minute++;
-      if (minute == 60) {
-        minute = 0;
-        hour++;
-      }
-      if (hour == 24) hour = 0;
-    } else {
-      second++;
-    }
     setState(() {
-      serverDateTime =
-          DateTime.parse("$serverDate ${hour.toString().padLeft(2, "0")}:${minute.toString().padLeft(2, "0")}:${second.toString().padLeft(2, "0")}");
+      serverDateTime = serverDateTime.add(Duration(seconds: 1));
     });
   }
 
